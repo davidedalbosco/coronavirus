@@ -9,11 +9,12 @@ import csv
 import dateutil.parser
 from matplotlib import rcParams
 
-params = {'legend.fontsize' : 20,
-          'axes.labelsize'  : 20, 
+
+params = {'legend.fontsize' : 14,
+          'axes.labelsize'  : 14, 
           'axes.titlesize'  : 24,
-          'xtick.labelsize' : 14,
-          'ytick.labelsize' : 14,
+          'xtick.labelsize' : 12,
+          'ytick.labelsize' : 12,
           'lines.linewidth' : 3,
           'lines.markersize': 12}
 
@@ -148,7 +149,7 @@ plt.hist(slope1_samples, histtype='stepfilled', bins=30, alpha=0.85,
 plt.plot(x_slope, stats.norm.pdf(x_slope, mu_slope, sigma_slope), 
          label='Prior of first slope')
 plt.grid()
-plt.xlabel('First slope value')
+plt.xlabel('First slope value [days$^{-1}$]')
 plt.legend()
 
 ax = plt.subplot(222)
@@ -158,7 +159,7 @@ plt.hist(slope2_samples, histtype='stepfilled', bins=30, alpha=0.85,
 plt.plot(x_slope, stats.norm.pdf(x_slope,  mu_slope, sigma_slope), 
          label='Prior of second slope')
 plt.grid()
-plt.xlabel('Second slope value')
+plt.xlabel('Second slope value [days$^{-1}$]')
 plt.legend()
 
 
@@ -180,7 +181,6 @@ plt.plot(x_intercept, stats.norm.pdf(x_intercept, mu_intercept, sigma_intercept)
 plt.grid()
 plt.xlabel('Second intercept value')
 plt.legend()
-plt.tight_layout()
 
 plt.figure()
 # Find unique values and their frequency 
@@ -194,7 +194,7 @@ plt.xticks(np.arange(len(cases)))
 plt.legend(loc='upper left')
 plt.grid()
 plt.xlabel(r'$\tau$ (days from %s)' % data_dict['data'][0])
-plt.ylabel('Probability');
+plt.ylabel('Probability')
 
 #%% Different plot for the posteriors
 
@@ -204,10 +204,10 @@ plt.hist(slope1_samples, histtype='stepfilled', bins=30, alpha=0.85,
          label='Posterior of first slope', density=True)
 plt.hist(slope2_samples, histtype='stepfilled', bins=30, alpha=0.85,
          label='Posterior of second slope', density=True)
-plt.plot(x_slope, stats.norm.pdf(x_slope,  mu_slope, sigma_slope), 
-         label='Slope prior')
+plt.plot(x_slope, stats.norm.pdf(x_slope,  mu_slope, sigma_slope), color='C3',
+         label='Slope prior', linewidth=1)
 plt.grid()
-plt.xlabel('Slope value')
+plt.xlabel('Slope value [days$^{-1}$]')
 plt.ylabel('Probability density')
 plt.xlim([0.1, 0.45])
 plt.legend()
@@ -218,7 +218,7 @@ plt.hist(intercept1_samples, histtype='stepfilled', bins=30, alpha=0.85,
 plt.hist(intercept2_samples, histtype='stepfilled', bins=30, alpha=0.85,
          label='Posterior of second intercept', density=True)
 plt.plot(x_intercept, stats.norm.pdf(x_intercept, mu_intercept, sigma_intercept), 
-         label='Intercept prior')
+         color='C3', label='Intercept prior', linewidth=1)
 plt.grid()
 plt.xlabel('Intercept value')
 plt.ylabel('Probability density')
@@ -234,8 +234,6 @@ plt.legend(loc='upper left')
 plt.grid()
 plt.xlabel(r'$\tau$ (days from %s)' % data_dict['data'][0])
 plt.ylabel('Probability')
-plt.tight_layout()
-plt.show()
 
 #%% Look at how the model compares with the data
 
@@ -263,6 +261,8 @@ plt.grid()
 plt.xlabel('Days from %s' % data_dict['data'][0])
 plt.ylabel('Total number of cases')
 plt.title('Prediction of the Bayesian model')
+plt.xlim([-1, 18])
+plt.ylim([-2000, 2e4])
 plt.legend()
 
 # Semilog scale
