@@ -207,7 +207,7 @@ plt.hist(slope2_samples, histtype='stepfilled', bins=30, alpha=0.85,
 plt.plot(x_slope, stats.norm.pdf(x_slope,  mu_slope, sigma_slope), color='C3',
          label='Slope prior', linewidth=1)
 plt.grid()
-plt.xlabel('Slope value [days$^{-1}$]')
+plt.xlabel('Slope value (days$^{-1}$)')
 plt.ylabel('Probability density')
 plt.xlim([0.1, 0.45])
 plt.legend()
@@ -230,10 +230,10 @@ plt.bar(labels, counts/norm, align='center', width=0.3, color='C2',
         label=r'Posterior of $\tau$')
 
 plt.xticks(np.arange(len(cases)))
-plt.legend(loc='upper left')
 plt.grid()
 plt.xlabel(r'$\tau$ (days from %s)' % data_dict['data'][0])
 plt.ylabel('Probability')
+plt.legend()
 
 #%% Look at how the model compares with the data
 
@@ -256,7 +256,7 @@ plt.plot(t_bayes, np.exp(t_bayes*slope1_samples.mean() +
          linestyle='--')
     
 plt.plot(t_bayes, np.exp(t_bayes*slope_bayes + intercept_bayes), 
-         label='Two components model')
+         label='Two-component model')
 plt.grid()
 plt.xlabel('Days from %s' % data_dict['data'][0])
 plt.ylabel('Total number of cases')
@@ -273,10 +273,94 @@ plt.semilogy(t_bayes, np.exp(t_bayes*slope1_samples.mean() +
              linestyle='--')
     
 plt.plot(t_bayes, np.exp(t_bayes*slope_bayes + intercept_bayes), 
-         label='Two components model')
+         label='Two-component model')
 plt.grid(which='both')
 plt.grid(which='minor', linestyle=':', linewidth=0.5)
 plt.xlabel('Days from %s' % data_dict['data'][0])
 plt.ylabel('Total number of cases')
 plt.title('Prediction of the Bayesian model')
 plt.legend()
+
+# %% Bayesian fit of the logistic curve
+
+mu_L = 10e4
+sigma_L = 5e4
+
+mu_k = 1
+sigma_k = 2
+
+mu_t0 = 20
+sigma_t0 = 10
+
+# Build up the model
+with pm.Model() as model:
+    # Define priors
+    L = pm.Normal('L', mu=mu_L, sigma=sigma_L)
+    k = pm.Normal('k', mu=mu_k, sigma=sigma_k)
+    t0 = pm.Normal('t0', mu=mu_t0, sigma=sigma_t0)
+    
+    sigma = pm.HalfCauchy('sigma', beta=10, testval=1.)
+        
+        # Define likelihood
+    likelihood = pm.Normal('log_cases', mu=L/(1+np.exp(-k*(days-t0))),
+                           sigma=sigma, observed=cases)
+    
+    step = pm.Metropolis()
+    trace = pm.sample(40000, tune=5000, step=step, cores=1)
+    
+# Results
+L_samples = trace['L']
+k_samples = trace['k']
+
+t0_samples = trace['t0']
+
+#%% Plot results of logistic fit
+
+# Plot the fit
+plt.figure()
+plt.plot(days, cases, linewidth=False, marker='o')
+plt.plot(time, logistic_func(time, L_samples.mean(), k_samples.mean(), 
+                             t0_samples.mean()), label='Logistic function fit')
+plt.xlabel('Days from %s' % data_dict['data'][0])
+plt.ylabel('Total number of cases')
+plt.grid()
+plt.title(r'Logistic function fit, $f(t)=\frac{L}{1+e^{-k\left(t-t_0\right)}}$')
+
+# Plot of the posteriors 
+x_L = np.linspace(mu_L - 3*sigma_L, mu_L + 3*sigma_L)
+x_k = np.linspace(mu_k - 3*sigma_k, mu_k + 3*sigma_k)
+x_t0 = np.linspace(mu_t0 - 3*sigma_t0, mu_t0 + 3*sigma_t0)
+
+plt.figure()
+ax = plt.subplot(311)
+plt.hist(L_samples, histtype='stepfilled', bins=30, alpha=0.85,
+         label='Posterior of $L$', density=True)
+plt.plot(x_L, stats.norm.pdf(x_L,  mu_L, sigma_L), color='C3',
+         label='Prior of $L$', linewidth=1)
+plt.grid()
+plt.xlabel('$L$ values')
+plt.ylabel('Probability density')
+plt.xlim([1e4, 7e4])
+plt.legend()
+
+plt.subplot(312)
+plt.hist(k_samples, histtype='stepfilled', bins=30, alpha=0.85,
+         label='Posterior of $k$', density=True)
+plt.plot(x_k, stats.norm.pdf(x_k,  mu_k, sigma_k), color='C3',
+         label='Prior of $k$', linewidth=1)
+plt.xlabel('$k$ values (days$^{-1}$)')
+plt.ylabel('Probability density')
+plt.grid()
+plt.xlim([0.15, 0.4])
+plt.legend()
+
+plt.subplot(313)
+plt.hist(t0_samples, histtype='stepfilled', bins=30, alpha=0.85,
+         label='Posterior of $t_0$', density=True)
+plt.plot(x_t0, stats.norm.pdf(x_t0,  mu_t0, sigma_t0), color='C3',
+         label='Prior of $t_0$', linewidth=1)
+plt.legend()
+plt.grid()
+plt.xlabel(r'$t_0$ values (days from %s)' % data_dict['data'][0])
+plt.ylabel('Probability')
+plt.xlim([10, 30])
